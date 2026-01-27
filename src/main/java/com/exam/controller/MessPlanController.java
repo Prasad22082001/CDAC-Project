@@ -6,9 +6,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import com.exam.dto.MessPlanDTO;
-import com.exam.entity.MessPlan;
 import com.exam.service.MessPlanService;
 
+import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 
 @RestController
@@ -19,40 +19,33 @@ public class MessPlanController {
 
     private final MessPlanService planService;
 
-    // ADD PLAN (vendor ke under)
-    @PostMapping("/add/{vendorId}")
+    // ✅ ADD PLAN
+    @PostMapping("/add")
     public ResponseEntity<MessPlanDTO> addPlan(
-            @RequestBody MessPlan plan,
-            @PathVariable Long vendorId) {
+            @Valid @RequestBody MessPlanDTO dto) {
 
-        return ResponseEntity.ok(planService.addPlan(plan, vendorId));
+        return ResponseEntity.ok(planService.addPlan(dto));
     }
 
-    // GET ALL PLANS
-    @GetMapping("/all")
-    public ResponseEntity<List<MessPlanDTO>> getAllPlans() {
-        return ResponseEntity.ok(planService.getAllPlans());
-    }
-
-    // GET BY ID
+    // ✅ GET PLAN BY ID
     @GetMapping("/{id}")
     public ResponseEntity<MessPlanDTO> getPlan(@PathVariable Long id) {
+
         return ResponseEntity.ok(planService.getPlanById(id));
     }
 
-    // UPDATE PLAN
-    @PutMapping("/update/{id}")
-    public ResponseEntity<MessPlanDTO> updatePlan(
-            @PathVariable Long id,
-            @RequestBody MessPlan plan) {
+    // ✅ GET ALL PLANS
+    @GetMapping("/all")
+    public ResponseEntity<List<MessPlanDTO>> getAllPlans() {
 
-        return ResponseEntity.ok(planService.updatePlan(id, plan));
+        return ResponseEntity.ok(planService.getAllPlans());
     }
 
-    // DELETE PLAN
+    // ✅ DELETE PLAN
     @DeleteMapping("/delete/{id}")
     public ResponseEntity<String> deletePlan(@PathVariable Long id) {
+
         planService.deletePlan(id);
-        return ResponseEntity.ok("Plan deleted successfully");
+        return ResponseEntity.ok("Mess plan deleted successfully");
     }
 }

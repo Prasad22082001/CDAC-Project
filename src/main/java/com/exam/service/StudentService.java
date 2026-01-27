@@ -2,17 +2,14 @@ package com.exam.service;
 
 import java.util.List;
 import com.exam.dto.StudentDTO;
-import com.exam.entity.Student;
 
 public interface StudentService {
 
-    StudentDTO addStudent(Student student);
-
-    List<StudentDTO> getAllStudents();
+    StudentDTO addStudent(StudentDTO dto);
 
     StudentDTO getStudentById(Long id);
 
-    StudentDTO updateStudent(Long id, Student student);
+    List<StudentDTO> getAllStudents();
 
     void deleteStudent(Long id);
 }

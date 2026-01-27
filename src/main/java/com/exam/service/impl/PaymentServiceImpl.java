@@ -1,17 +1,15 @@
 package com.exam.service.impl;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 
 import com.exam.dto.PaymentDTO;
-import com.exam.entity.MessPlan;
 import com.exam.entity.Payment;
 import com.exam.entity.Student;
-import com.exam.repository.MessPlanRepository;
 import com.exam.repository.PaymentRepository;
 import com.exam.repository.StudentRepository;
 import com.exam.service.PaymentService;
@@ -22,47 +20,40 @@ import lombok.AllArgsConstructor;
 @AllArgsConstructor
 public class PaymentServiceImpl implements PaymentService {
 
-    private final PaymentRepository paymentRepository;
-    private final StudentRepository studentRepository;
-    private final MessPlanRepository planRepository;
-    private final ModelMapper modelMapper;
+    private PaymentRepository paymentRepository;
+    private StudentRepository studentRepository;
+    private ModelMapper mapper;
 
     @Override
-    public PaymentDTO makePayment(Payment payment, Long studentId, Long planId) {
+    public PaymentDTO addPayment(PaymentDTO dto) {
 
-        Student student = studentRepository.findById(studentId)
+        // get student
+        Student student = studentRepository.findById(dto.getStudentId())
                 .orElseThrow(() -> new RuntimeException("Student not found"));
 
-        MessPlan plan = planRepository.findById(planId)
-                .orElseThrow(() -> new RuntimeException("Plan not found"));
-
+        // map dto to entity
+        Payment payment = mapper.map(dto, Payment.class);
         payment.setStudent(student);
-        payment.setPlan(plan);
         payment.setPaymentDate(LocalDateTime.now());
-        payment.setStatus("SUCCESS");
 
+        // save
         Payment saved = paymentRepository.save(payment);
-        return modelMapper.map(saved, PaymentDTO.class);
+
+        return mapper.map(saved, PaymentDTO.class);
     }
 
     @Override
     public List<PaymentDTO> getAllPayments() {
 
-        List<Payment> payments = paymentRepository.findAll();
-        List<PaymentDTO> list = new ArrayList<>();
-
-        for (Payment p : payments) {
-            list.add(modelMapper.map(p, PaymentDTO.class));
-        }
-        return list;
+        return paymentRepository.findAll()
+                .stream()
+                .map(p -> mapper.map(p, PaymentDTO.class))
+                .collect(Collectors.toList());
     }
 
     @Override
-    public PaymentDTO getPaymentById(Long id) {
+    public void deletePayment(Long id) {
 
-        Payment payment = paymentRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Payment not found"));
-
-        return modelMapper.map(payment, PaymentDTO.class);
+        paymentRepository.deleteById(id);
     }
 }

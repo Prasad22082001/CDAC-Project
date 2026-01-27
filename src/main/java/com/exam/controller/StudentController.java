@@ -6,9 +6,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import com.exam.dto.StudentDTO;
-import com.exam.entity.Student;
 import com.exam.service.StudentService;
 
+import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 
 @RestController
@@ -19,36 +19,32 @@ public class StudentController {
 
     private final StudentService studentService;
 
-    // ADD STUDENT
+    // ✅ ADD STUDENT
     @PostMapping("/add")
-    public ResponseEntity<StudentDTO> addStudent(@RequestBody Student student) {
-        return ResponseEntity.ok(studentService.addStudent(student));
+    public ResponseEntity<StudentDTO> addStudent(
+            @Valid @RequestBody StudentDTO dto) {
+
+        return ResponseEntity.ok(studentService.addStudent(dto));
     }
 
-    // GET ALL
-    @GetMapping("/all")
-    public ResponseEntity<List<StudentDTO>> getAllStudents() {
-        return ResponseEntity.ok(studentService.getAllStudents());
-    }
-
-    // GET BY ID
+    // ✅ GET STUDENT BY ID
     @GetMapping("/{id}")
     public ResponseEntity<StudentDTO> getStudent(@PathVariable Long id) {
+
         return ResponseEntity.ok(studentService.getStudentById(id));
     }
 
-    // UPDATE
-    @PutMapping("/update/{id}")
-    public ResponseEntity<StudentDTO> updateStudent(
-            @PathVariable Long id,
-            @RequestBody Student student) {
+    // ✅ GET ALL STUDENTS
+    @GetMapping("/all")
+    public ResponseEntity<List<StudentDTO>> getAllStudents() {
 
-        return ResponseEntity.ok(studentService.updateStudent(id, student));
+        return ResponseEntity.ok(studentService.getAllStudents());
     }
 
-    // DELETE
+    // ✅ DELETE STUDENT
     @DeleteMapping("/delete/{id}")
     public ResponseEntity<String> deleteStudent(@PathVariable Long id) {
+
         studentService.deleteStudent(id);
         return ResponseEntity.ok("Student deleted successfully");
     }

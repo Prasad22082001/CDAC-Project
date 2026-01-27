@@ -1,6 +1,7 @@
 package com.exam.service.impl;
 
-import java.util.*;
+import java.util.List;
+import java.util.stream.Collectors;
 
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
@@ -13,65 +14,57 @@ import com.exam.repository.MessVendorRepository;
 import com.exam.service.MessVendorService;
 
 import lombok.AllArgsConstructor;
+
 @Service
 @AllArgsConstructor
+public class MessVendorServiceImpl implements MessVendorService {
 
-public class MessVendorServiceImpl implements MessVendorService{
+    private final MessVendorRepository vendorRepository;
+    private final AdminRepository adminRepository;
+    private final ModelMapper mapper;
 
-	 private final MessVendorRepository vendorRepository;
-	    private final AdminRepository adminRepository;
-	    private final ModelMapper modelMapper;
+    @Override
+    public MessVendorDTO addVendor(MessVendorDTO dto) {
 
-	    @Override
-	    public MessVendorDTO saveVendor(MessVendor vendor, Long adminId) {
+        // 🔗 resolve adminId
+        Admin admin = adminRepository.findById(dto.getAdminId())
+                .orElseThrow(() -> new RuntimeException("Admin not found"));
 
-	        Admin admin = adminRepository.findById(adminId)
-	                .orElseThrow(() -> new RuntimeException("Admin not found"));
+        // DTO → Entity
+        MessVendor vendor = mapper.map(dto, MessVendor.class);
+        vendor.setAdmin(admin);
 
-	        vendor.setAdmin(admin); // 🔗 mapping set
-	        MessVendor saved = vendorRepository.save(vendor);
+        // save
+        MessVendor saved = vendorRepository.save(vendor);
 
-	        return modelMapper.map(saved, MessVendorDTO.class);
-	    }
+        // Entity → DTO
+        return mapper.map(saved, MessVendorDTO.class);
+    }
 
-	    @Override
-	    public List<MessVendorDTO> getAllVendors() {
-	        List<MessVendor> vendors = vendorRepository.findAll();
-	        List<MessVendorDTO> list = new ArrayList<>();
+    @Override
+    public MessVendorDTO getVendorById(Long id) {
 
-	        for (MessVendor v : vendors) {
-	            list.add(modelMapper.map(v, MessVendorDTO.class));
-	        }
-	        return list;
-	    }
+        MessVendor vendor = vendorRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Vendor not found"));
 
-	    @Override
-	    public MessVendorDTO getVendorById(Long id) {
-	        MessVendor vendor = vendorRepository.findById(id)
-	                .orElseThrow(() -> new RuntimeException("Vendor not found"));
+        return mapper.map(vendor, MessVendorDTO.class);
+    }
 
-	        return modelMapper.map(vendor, MessVendorDTO.class);
-	    }
+    @Override
+    public List<MessVendorDTO> getAllVendors() {
 
-	    @Override
-	    public void deleteVendor(Long id) {
-	        vendorRepository.deleteById(id);
-	    }
-	    
-	    @Override
-	    public MessVendorDTO updateVendor(Long id, MessVendor vendor) {
+        return vendorRepository.findAll()
+                .stream()
+                .map(v -> mapper.map(v, MessVendorDTO.class))
+                .collect(Collectors.toList());
+    }
+    @Override
+    public void deleteVendor(Long id) {
 
-	        MessVendor existing = vendorRepository.findById(id)
-	                .orElseThrow(() -> new RuntimeException("Vendor not found"));
+        MessVendor vendor = vendorRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Vendor not found"));
 
-	        existing.setMessName(vendor.getMessName());
-	        existing.setEmail(vendor.getEmail());
-	        existing.setContact(vendor.getContact());
-	        existing.setType(vendor.getType());
-
-	        MessVendor updated = vendorRepository.save(existing);
-	        return modelMapper.map(updated, MessVendorDTO.class);
-	    }
-
+        vendorRepository.delete(vendor);
+    }
 
 }

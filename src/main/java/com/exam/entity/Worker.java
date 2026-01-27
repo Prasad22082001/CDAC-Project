@@ -13,14 +13,20 @@ public class Worker {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "worker_id")
     private Long workerId;
 
+    @Column(nullable = false)
     private String name;
-    private String role;     // cook / cleaner / helper
+
+    @Column(nullable = false)
+    private String role;   // cook / cleaner / helper
+
+    @Column(nullable = false)
     private String contact;
 
-    // 🔗 mapping: many workers belong to one vendor
+    // ✅ Many workers belong to one vendor
     @ManyToOne
-    @JoinColumn(name = "vendor_id")
+    @JoinColumn(name = "vendor_id", nullable = false)
     private MessVendor vendor;
 }

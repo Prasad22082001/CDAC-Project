@@ -1,7 +1,7 @@
 package com.exam.service.impl;
 
-import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
@@ -19,59 +19,49 @@ import lombok.AllArgsConstructor;
 @AllArgsConstructor
 public class MenuServiceImpl implements MenuService {
 
-    private final MenuRepository menuRepository;
-    private final MessVendorRepository vendorRepository;
-    private final ModelMapper modelMapper;
+    private MenuRepository menuRepository;
+    private MessVendorRepository vendorRepository;
+    private ModelMapper mapper;
 
     @Override
-    public MenuDTO addMenu(Menu menu, Long vendorId) {
+    public MenuDTO addMenu(MenuDTO dto) {
 
-        MessVendor vendor = vendorRepository.findById(vendorId)
+        // get vendor
+        MessVendor vendor = vendorRepository.findById(dto.getVendorId())
                 .orElseThrow(() -> new RuntimeException("Vendor not found"));
 
-        menu.setVendor(vendor); // 🔗 mapping
+        // map dto to entity
+        Menu menu = mapper.map(dto, Menu.class);
+        menu.setVendor(vendor);
+
+        // save menu
         Menu saved = menuRepository.save(menu);
 
-        return modelMapper.map(saved, MenuDTO.class);
-    }
-
-    @Override
-    public List<MenuDTO> getAllMenu() {
-
-        List<Menu> menus = menuRepository.findAll();
-        List<MenuDTO> list = new ArrayList<>();
-
-        for (Menu m : menus) {
-            list.add(modelMapper.map(m, MenuDTO.class));
-        }
-        return list;
+        // return dto
+        return mapper.map(saved, MenuDTO.class);
     }
 
     @Override
     public MenuDTO getMenuById(Long id) {
 
         Menu menu = menuRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Menu item not found"));
+                .orElseThrow(() -> new RuntimeException("Menu not found"));
 
-        return modelMapper.map(menu, MenuDTO.class);
+        return mapper.map(menu, MenuDTO.class);
     }
 
     @Override
-    public MenuDTO updateMenu(Long id, Menu menu) {
+    public List<MenuDTO> getAllMenu() {
 
-        Menu existing = menuRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Menu item not found"));
-
-        existing.setItemName(menu.getItemName());
-        existing.setType(menu.getType());
-        existing.setPrice(menu.getPrice());
-
-        Menu updated = menuRepository.save(existing);
-        return modelMapper.map(updated, MenuDTO.class);
+        return menuRepository.findAll()
+                .stream()
+                .map(menu -> mapper.map(menu, MenuDTO.class))
+                .collect(Collectors.toList());
     }
 
     @Override
     public void deleteMenu(Long id) {
+
         menuRepository.deleteById(id);
     }
 }

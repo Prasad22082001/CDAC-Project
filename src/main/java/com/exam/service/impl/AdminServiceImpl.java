@@ -1,6 +1,7 @@
 package com.exam.service.impl;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
@@ -17,96 +18,32 @@ import lombok.AllArgsConstructor;
 public class AdminServiceImpl implements AdminService {
 
     private final AdminRepository adminRepository;
-    private final ModelMapper modelMapper;
+    private final ModelMapper mapper;
 
     @Override
-    public AdminDTO saveAdmin(Admin admin) {
+    public AdminDTO addAdmin(AdminDTO dto) {
+
+        Admin admin = mapper.map(dto, Admin.class);
         Admin saved = adminRepository.save(admin);
-        return modelMapper.map(saved, AdminDTO.class);
-    }
 
-    @Override
-    public List<AdminDTO> getAllAdmins() {
-        List<Admin> admins = adminRepository.findAll();
-        return admins.stream()
-                     .map(a -> modelMapper.map(a, AdminDTO.class))
-                     .toList();
+        return mapper.map(saved, AdminDTO.class);
     }
 
     @Override
     public AdminDTO getAdminById(Long id) {
+
         Admin admin = adminRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Admin not found"));
-        return modelMapper.map(admin, AdminDTO.class);
+
+        return mapper.map(admin, AdminDTO.class);
     }
 
     @Override
-    public AdminDTO updateAdmin(Long id, Admin admin) {
-        Admin existing = adminRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Admin not found"));
+    public List<AdminDTO> getAllAdmins() {
 
-        existing.setName(admin.getName());
-        existing.setEmail(admin.getEmail());
-        existing.setContact(admin.getContact());
-        existing.setPass(admin.getPass());
-
-        Admin updated = adminRepository.save(existing);
-        return modelMapper.map(updated, AdminDTO.class);
-    }
-
-    @Override
-    public void deleteAdmin(Long id) {
-        adminRepository.deleteById(id);
+        return adminRepository.findAll()
+                .stream()
+                .map(admin -> mapper.map(admin, AdminDTO.class))
+                .collect(Collectors.toList());
     }
 }
-
-
-/*
- * package com.exam.service.impl;
- * 
- * import java.util.List;
- * 
- * import org.springframework.stereotype.Service;
- * 
- * import com.exam.entity.Admin; import com.exam.repository.AdminRepository;
- * import com.exam.service.AdminService;
- * 
- * import lombok.AllArgsConstructor;
- * 
- * 
- * @AllArgsConstructor
- * 
- * @Service public class AdminServiceImpl implements AdminService {
- * 
- * private final AdminRepository adminRepository;
- * 
- * 
- * 
- * @Override public Admin saveAdmin(Admin admin) { return
- * adminRepository.save(admin); }
- * 
- * @Override public List<Admin> getAllAdmins() {
- * 
- * return adminRepository.findAll(); }
- * 
- * @Override public Admin updateAdmin(Long id, Admin admin) {
- * 
- * Admin existingAdmin = getAdminById(id);
- * 
- * existingAdmin.setName(admin.getName());
- * existingAdmin.setEmail(admin.getEmail());
- * existingAdmin.setContact(admin.getContact());
- * existingAdmin.setPass(admin.getPass());
- * 
- * return adminRepository.save(existingAdmin); }
- * 
- * @Override public void deleteAdmin(Long id) { adminRepository.deleteById(id);
- * }
- * 
- * 
- * @Override public Admin getAdminById(Long id) { return
- * adminRepository.findById(id) .orElseThrow(() -> new
- * RuntimeException("Admin not found with id: " + id)); }
- * 
- * }
- */

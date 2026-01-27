@@ -15,20 +15,23 @@ public class Payment {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "payment_id")
     private Long paymentId;
 
+    @Column(nullable = false)
     private double amount;
+
+    @Column(nullable = false)
     private String paymentMode;   // UPI / Cash / Card
+
+    @Column(nullable = false)
     private String status;        // SUCCESS / FAILED
+
+    @Column(nullable = false)
     private LocalDateTime paymentDate;
 
-    // 🔗 many payments -> one student
+    // ✅ Many payments done by one student
     @ManyToOne
-    @JoinColumn(name = "student_id")
+    @JoinColumn(name = "student_id", nullable = false)
     private Student student;
-
-    // 🔗 many payments -> one plan
-    @ManyToOne
-    @JoinColumn(name = "plan_id")
-    private MessPlan plan;
 }

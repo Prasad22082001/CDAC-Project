@@ -1,7 +1,7 @@
 package com.exam.service.impl;
 
-import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
@@ -19,57 +19,39 @@ import lombok.AllArgsConstructor;
 @AllArgsConstructor
 public class WorkerServiceImpl implements WorkerService {
 
-    private final WorkerRepository workerRepository;
-    private final MessVendorRepository vendorRepository;
-    private final ModelMapper modelMapper;
+    private WorkerRepository workerRepository;
+    private MessVendorRepository vendorRepository;
+    private ModelMapper mapper;
 
     @Override
-    public WorkerDTO addWorker(Worker worker, Long vendorId) {
+    public WorkerDTO addWorker(WorkerDTO dto) {
 
-        MessVendor vendor = vendorRepository.findById(vendorId)
+        // get vendor
+        MessVendor vendor = vendorRepository.findById(dto.getVendorId())
                 .orElseThrow(() -> new RuntimeException("Vendor not found"));
 
-        worker.setVendor(vendor); // 🔗 mapping set
+        // map dto to entity
+        Worker worker = mapper.map(dto, Worker.class);
+        worker.setVendor(vendor);
+
+        // save
         Worker saved = workerRepository.save(worker);
 
-        return modelMapper.map(saved, WorkerDTO.class);
+        return mapper.map(saved, WorkerDTO.class);
     }
 
     @Override
     public List<WorkerDTO> getAllWorkers() {
-        List<Worker> workers = workerRepository.findAll();
-        List<WorkerDTO> list = new ArrayList<>();
 
-        for (Worker w : workers) {
-            list.add(modelMapper.map(w, WorkerDTO.class));
-        }
-        return list;
-    }
-
-    @Override
-    public WorkerDTO getWorkerById(Long id) {
-        Worker worker = workerRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Worker not found"));
-
-        return modelMapper.map(worker, WorkerDTO.class);
-    }
-
-    @Override
-    public WorkerDTO updateWorker(Long id, Worker worker) {
-
-        Worker existing = workerRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Worker not found"));
-
-        existing.setName(worker.getName());
-        existing.setRole(worker.getRole());
-        existing.setContact(worker.getContact());
-
-        Worker updated = workerRepository.save(existing);
-        return modelMapper.map(updated, WorkerDTO.class);
+        return workerRepository.findAll()
+                .stream()
+                .map(w -> mapper.map(w, WorkerDTO.class))
+                .collect(Collectors.toList());
     }
 
     @Override
     public void deleteWorker(Long id) {
+
         workerRepository.deleteById(id);
     }
 }
