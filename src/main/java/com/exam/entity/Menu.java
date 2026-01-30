@@ -1,4 +1,5 @@
 package com.exam.entity;
+
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -6,7 +7,7 @@ import jakarta.validation.constraints.Positive;
 import lombok.*;
 
 @Entity
-@Table(name = "menu")
+@Table(name = "menus")
 @Getter
 @Setter
 @AllArgsConstructor
@@ -17,14 +18,17 @@ public class Menu {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long menuId;
 
-    @NotBlank(message = "Item name cannot be empty")
+    @NotBlank
     private String itemName;
 
-    @Positive(message = "Price must be greater than zero")
+    @Enumerated(EnumType.STRING)
+    @NotNull
+    private FoodType type;
+
+    @Positive
     private double price;
 
-    @NotNull(message = "Vendor is required")
     @ManyToOne
-    @JoinColumn(name = "vendor_id")
+    @JoinColumn(name = "vendor_id", nullable = false)
     private MessVendor vendor;
 }

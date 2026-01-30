@@ -5,9 +5,9 @@ import com.exam.dto.WorkerDTO;
 
 public interface WorkerService {
 
-    WorkerDTO addWorker(WorkerDTO dto);
+    WorkerDTO addWorker(WorkerDTO dto, Long loggedInVendorId);
 
-    List<WorkerDTO> getAllWorkers();
+    List<WorkerDTO> getAllWorkers(Long loggedInVendorId, boolean isAdmin);
 
-    void deleteWorker(Long id);
+    void deleteWorker(Long workerId, Long loggedInVendorId, boolean isAdmin);
 }

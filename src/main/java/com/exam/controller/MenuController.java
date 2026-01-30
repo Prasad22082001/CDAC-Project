@@ -2,11 +2,16 @@ package com.exam.controller;
 
 import java.util.List;
 
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import com.exam.dto.MenuDTO;
+import com.exam.security.UserPrincipal;
 import com.exam.service.MenuService;
 
+import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 
 @RestController
@@ -15,30 +20,48 @@ import lombok.AllArgsConstructor;
 @AllArgsConstructor
 public class MenuController {
 
-    private MenuService menuService;
+    private final MenuService menuService;
 
-    // ✅ ADD MENU
+    // ➕ ADD MENU (VENDOR ONLY)
+    @PreAuthorize("hasRole('VENDOR')")
     @PostMapping("/add")
-    public MenuDTO addMenu(@RequestBody MenuDTO dto) {
-        return menuService.addMenu(dto);
+    public ResponseEntity<MenuDTO> addMenu(
+            @Valid @RequestBody MenuDTO dto,
+            @AuthenticationPrincipal UserPrincipal principal) {
+
+        return ResponseEntity.ok(
+                menuService.addMenu(dto, principal.getUserId())
+        );
     }
 
-    // ✅ GET MENU BY ID
+    // 👀 GET MENU BY ID (ALL ROLES)
+    @PreAuthorize("hasAnyRole('ADMIN','VENDOR','STUDENT')")
     @GetMapping("/{id}")
-    public MenuDTO getMenuById(@PathVariable Long id) {
-        return menuService.getMenuById(id);
+    public ResponseEntity<MenuDTO> getMenuById(@PathVariable Long id) {
+
+        return ResponseEntity.ok(menuService.getMenuById(id));
     }
 
-    // ✅ GET ALL MENU
+    // 👀 GET ALL MENUS (ALL ROLES)
+    @PreAuthorize("hasAnyRole('ADMIN','VENDOR','STUDENT')")
     @GetMapping("/all")
-    public List<MenuDTO> getAllMenu() {
-        return menuService.getAllMenu();
+    public ResponseEntity<List<MenuDTO>> getAllMenu() {
+
+        return ResponseEntity.ok(menuService.getAllMenu());
     }
 
-    // ✅ DELETE MENU
+    // ❌ DELETE MENU (ADMIN OR OWNER VENDOR)
+    @PreAuthorize("hasAnyRole('ADMIN','VENDOR')")
     @DeleteMapping("/delete/{id}")
-    public String deleteMenu(@PathVariable Long id) {
-        menuService.deleteMenu(id);
-        return "Menu deleted successfully";
+    public ResponseEntity<String> deleteMenu(
+            @PathVariable Long id,
+            @AuthenticationPrincipal UserPrincipal principal) {
+
+        boolean isAdmin = principal.getAuthorities()
+                .stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+
+        menuService.deleteMenu(id, principal.getUserId(), isAdmin);
+        return ResponseEntity.ok("Menu deleted successfully");
     }
 }

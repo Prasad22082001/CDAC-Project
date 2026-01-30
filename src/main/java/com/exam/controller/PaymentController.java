@@ -2,11 +2,16 @@ package com.exam.controller;
 
 import java.util.List;
 
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import com.exam.dto.PaymentDTO;
+import com.exam.security.UserPrincipal;
 import com.exam.service.PaymentService;
 
+import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 
 @RestController
@@ -15,24 +20,36 @@ import lombok.AllArgsConstructor;
 @AllArgsConstructor
 public class PaymentController {
 
-    private PaymentService paymentService;
+    private final PaymentService paymentService;
 
-    // ✅ ADD PAYMENT
-    @PostMapping("/add")
-    public PaymentDTO addPayment(@RequestBody PaymentDTO dto) {
-        return paymentService.addPayment(dto);
+    // 💳 STUDENT → MAKE PAYMENT
+    @PreAuthorize("hasRole('STUDENT')")
+    @PostMapping("/pay")
+    public ResponseEntity<PaymentDTO> makePayment(
+            @Valid @RequestBody PaymentDTO dto,
+            @AuthenticationPrincipal UserPrincipal principal) {
+
+        return ResponseEntity.ok(
+                paymentService.makePayment(dto, principal.getUserId())
+        );
     }
 
-    // ✅ GET ALL PAYMENTS
+    // 👀 STUDENT → VIEW OWN PAYMENTS
+    @PreAuthorize("hasRole('STUDENT')")
+    @GetMapping("/my")
+    public ResponseEntity<List<PaymentDTO>> myPayments(
+            @AuthenticationPrincipal UserPrincipal principal) {
+
+        return ResponseEntity.ok(
+                paymentService.getMyPayments(principal.getUserId())
+        );
+    }
+
+    // 👑 ADMIN → VIEW ALL PAYMENTS
+    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/all")
-    public List<PaymentDTO> getAllPayments() {
-        return paymentService.getAllPayments();
-    }
+    public ResponseEntity<List<PaymentDTO>> getAllPayments() {
 
-    // ✅ DELETE PAYMENT
-    @DeleteMapping("/delete/{id}")
-    public String deletePayment(@PathVariable Long id) {
-        paymentService.deletePayment(id);
-        return "Payment deleted successfully";
+        return ResponseEntity.ok(paymentService.getAllPayments());
     }
 }

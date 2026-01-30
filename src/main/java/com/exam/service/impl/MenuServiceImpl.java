@@ -13,32 +13,36 @@ import com.exam.repository.MenuRepository;
 import com.exam.repository.MessVendorRepository;
 import com.exam.service.MenuService;
 
-import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
 
 @Service
-@AllArgsConstructor
+@RequiredArgsConstructor
 public class MenuServiceImpl implements MenuService {
 
-    private MenuRepository menuRepository;
-    private MessVendorRepository vendorRepository;
-    private ModelMapper mapper;
+    private final MenuRepository menuRepository;
+    private final MessVendorRepository vendorRepository;
+    private final ModelMapper mapper;
 
     @Override
-    public MenuDTO addMenu(MenuDTO dto) {
+    public MenuDTO addMenu(MenuDTO dto, Long loggedInVendorId) {
 
-        // get vendor
-        MessVendor vendor = vendorRepository.findById(dto.getVendorId())
+        if (!dto.getVendorId().equals(loggedInVendorId)) {
+            throw new RuntimeException("Vendor can add menu only for own mess");
+        }
+
+        MessVendor vendor = vendorRepository.findById(loggedInVendorId)
                 .orElseThrow(() -> new RuntimeException("Vendor not found"));
 
-        // map dto to entity
         Menu menu = mapper.map(dto, Menu.class);
         menu.setVendor(vendor);
 
-        // save menu
         Menu saved = menuRepository.save(menu);
 
-        // return dto
-        return mapper.map(saved, MenuDTO.class);
+        // 🔧 FIX: vendorId set in response
+        MenuDTO response = mapper.map(saved, MenuDTO.class);
+        response.setVendorId(vendor.getVendorId());
+
+        return response;
     }
 
     @Override
@@ -47,7 +51,10 @@ public class MenuServiceImpl implements MenuService {
         Menu menu = menuRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Menu not found"));
 
-        return mapper.map(menu, MenuDTO.class);
+        MenuDTO dto = mapper.map(menu, MenuDTO.class);
+        dto.setVendorId(menu.getVendor().getVendorId()); // 🔧 FIX
+
+        return dto;
     }
 
     @Override
@@ -55,13 +62,24 @@ public class MenuServiceImpl implements MenuService {
 
         return menuRepository.findAll()
                 .stream()
-                .map(menu -> mapper.map(menu, MenuDTO.class))
+                .map(menu -> {
+                    MenuDTO dto = mapper.map(menu, MenuDTO.class);
+                    dto.setVendorId(menu.getVendor().getVendorId()); // 🔧 FIX
+                    return dto;
+                })
                 .collect(Collectors.toList());
     }
 
     @Override
-    public void deleteMenu(Long id) {
+    public void deleteMenu(Long id, Long loggedInVendorId, boolean isAdmin) {
 
-        menuRepository.deleteById(id);
+        Menu menu = menuRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Menu not found"));
+
+        if (!isAdmin && !menu.getVendor().getVendorId().equals(loggedInVendorId)) {
+            throw new RuntimeException("Access denied");
+        }
+
+        menuRepository.delete(menu);
     }
 }

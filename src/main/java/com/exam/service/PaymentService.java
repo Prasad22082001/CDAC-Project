@@ -5,9 +5,12 @@ import com.exam.dto.PaymentDTO;
 
 public interface PaymentService {
 
-    PaymentDTO addPayment(PaymentDTO dto);
+    
+    PaymentDTO makePayment(PaymentDTO dto, Long studentId);
 
+ 
+    List<PaymentDTO> getMyPayments(Long studentId);
+
+  
     List<PaymentDTO> getAllPayments();
-
-    void deletePayment(Long id);
 }

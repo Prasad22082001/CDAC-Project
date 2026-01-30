@@ -1,5 +1,7 @@
 package com.exam.dto;
 
+import java.time.LocalDateTime;
+
 import jakarta.validation.constraints.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -8,7 +10,7 @@ import lombok.Setter;
 @Setter
 public class PaymentDTO {
 
-    private Long paymentId; // response ke liye
+    private Long paymentId;
 
     @Positive(message = "Amount must be greater than zero")
     private double amount;
@@ -16,12 +18,7 @@ public class PaymentDTO {
     @NotBlank(message = "Payment mode is required")
     private String paymentMode;   // UPI / CASH / CARD
 
-    @NotBlank(message = "Payment status is required")
     private String status;        // SUCCESS / FAILED
 
-    @NotNull(message = "Student ID is required")
-    private Long studentId;       // in-between use
-
-    @NotNull(message = "Admin ID is required")
-    private Long adminId;         // in-between use
+    private LocalDateTime paymentDate;
 }

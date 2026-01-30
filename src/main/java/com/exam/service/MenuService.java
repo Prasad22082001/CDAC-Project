@@ -5,11 +5,11 @@ import com.exam.dto.MenuDTO;
 
 public interface MenuService {
 
-    MenuDTO addMenu(MenuDTO dto);
+    MenuDTO addMenu(MenuDTO dto, Long loggedInVendorId);
 
     MenuDTO getMenuById(Long id);
 
     List<MenuDTO> getAllMenu();
 
-    void deleteMenu(Long id);
+    void deleteMenu(Long id, Long loggedInVendorId, boolean isAdmin);
 }

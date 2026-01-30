@@ -17,13 +17,15 @@ public class MessVendorDTO {
     @NotBlank(message = "Email is required")
     private String email;
 
+    @NotBlank(message = "Password is required")
+    private String password;   // ✅ ADD THIS
+
     @NotBlank(message = "Contact number is required")
-   
     private String contact;
 
     @NotNull(message = "Admin ID is required")
     private Long adminId;
 
-    // OPTIONAL (agar vendor type track karna hai)
-    // private VendorType type;
+    // optional
+    // private String type;
 }

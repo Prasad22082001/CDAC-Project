@@ -11,5 +11,7 @@ public interface StudentService {
 
     List<StudentDTO> getAllStudents();
 
+    StudentDTO selectPlan(Long studentId, Long planId);
+
     void deleteStudent(Long id);
 }

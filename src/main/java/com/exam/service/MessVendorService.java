@@ -1,6 +1,7 @@
 package com.exam.service;
 
 import java.util.List;
+
 import com.exam.dto.MessVendorDTO;
 
 public interface MessVendorService {
@@ -11,5 +12,5 @@ public interface MessVendorService {
 
     List<MessVendorDTO> getAllVendors();
 
-    void deleteVendor(Long id);   // ✅ DELETE
+    void deleteVendor(Long id);
 }

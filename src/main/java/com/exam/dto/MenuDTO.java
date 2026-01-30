@@ -1,4 +1,5 @@
 package com.exam.dto;
+
 import com.exam.entity.FoodType;
 
 import jakarta.validation.constraints.NotBlank;
@@ -6,19 +7,22 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import lombok.Getter;
 import lombok.Setter;
+
 @Getter
 @Setter
 public class MenuDTO {
 
-    @NotBlank(message = "Item name cannot be blank")
+    private Long menuId;
+
+    @NotBlank
     private String itemName;
 
-    @NotNull(message = "Food type is required")
+    @NotNull
     private FoodType type;
 
-    @Positive(message = "Price must be greater than zero")
+    @Positive
     private double price;
 
-    @NotNull(message = "Vendor ID is required")
+    @NotNull
     private Long vendorId;
 }

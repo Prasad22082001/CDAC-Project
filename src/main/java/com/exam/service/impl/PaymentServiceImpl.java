@@ -14,32 +14,42 @@ import com.exam.repository.PaymentRepository;
 import com.exam.repository.StudentRepository;
 import com.exam.service.PaymentService;
 
-import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
 
 @Service
-@AllArgsConstructor
+@RequiredArgsConstructor
 public class PaymentServiceImpl implements PaymentService {
 
-    private PaymentRepository paymentRepository;
-    private StudentRepository studentRepository;
-    private ModelMapper mapper;
+    private final PaymentRepository paymentRepository;
+    private final StudentRepository studentRepository;
+    private final ModelMapper mapper;
 
     @Override
-    public PaymentDTO addPayment(PaymentDTO dto) {
+    public PaymentDTO makePayment(PaymentDTO dto, Long studentId) {
 
-        // get student
-        Student student = studentRepository.findById(dto.getStudentId())
+        // 🔗 validate student
+        Student student = studentRepository.findById(studentId)
                 .orElseThrow(() -> new RuntimeException("Student not found"));
 
-        // map dto to entity
+        // DTO → Entity
         Payment payment = mapper.map(dto, Payment.class);
         payment.setStudent(student);
         payment.setPaymentDate(LocalDateTime.now());
 
-        // save
-        Payment saved = paymentRepository.save(payment);
+        // 💳 MOCK PAYMENT FLOW
+        payment.setStatus("SUCCESS"); // always success for project
 
+        Payment saved = paymentRepository.save(payment);
         return mapper.map(saved, PaymentDTO.class);
+    }
+
+    @Override
+    public List<PaymentDTO> getMyPayments(Long studentId) {
+
+        return paymentRepository.findByStudentStudentId(studentId)
+                .stream()
+                .map(payment -> mapper.map(payment, PaymentDTO.class))
+                .collect(Collectors.toList());
     }
 
     @Override
@@ -47,13 +57,7 @@ public class PaymentServiceImpl implements PaymentService {
 
         return paymentRepository.findAll()
                 .stream()
-                .map(p -> mapper.map(p, PaymentDTO.class))
+                .map(payment -> mapper.map(payment, PaymentDTO.class))
                 .collect(Collectors.toList());
-    }
-
-    @Override
-    public void deletePayment(Long id) {
-
-        paymentRepository.deleteById(id);
     }
 }

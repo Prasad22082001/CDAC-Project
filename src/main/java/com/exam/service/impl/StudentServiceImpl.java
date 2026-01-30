@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import org.modelmapper.ModelMapper;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import com.exam.dto.StudentDTO;
@@ -13,31 +14,24 @@ import com.exam.repository.MessPlanRepository;
 import com.exam.repository.StudentRepository;
 import com.exam.service.StudentService;
 
-import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
 
 @Service
-@AllArgsConstructor
+@RequiredArgsConstructor
 public class StudentServiceImpl implements StudentService {
 
     private final StudentRepository studentRepository;
     private final MessPlanRepository planRepository;
     private final ModelMapper mapper;
+    private final PasswordEncoder passwordEncoder;
 
     @Override
     public StudentDTO addStudent(StudentDTO dto) {
 
-        // 🔗 resolve planId
-        MessPlan plan = planRepository.findById(dto.getPlanId())
-                .orElseThrow(() -> new RuntimeException("Mess plan not found"));
-
-        // DTO → Entity
         Student student = mapper.map(dto, Student.class);
-        student.setPlan(plan);
+        student.setPassword(passwordEncoder.encode(dto.getPassword()));
 
-        // save
         Student saved = studentRepository.save(student);
-
-        // Entity → DTO
         return mapper.map(saved, StudentDTO.class);
     }
 
@@ -47,7 +41,11 @@ public class StudentServiceImpl implements StudentService {
         Student student = studentRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Student not found"));
 
-        return mapper.map(student, StudentDTO.class);
+        StudentDTO dto = mapper.map(student, StudentDTO.class);
+        if (student.getPlan() != null) {
+            dto.setPlanId(student.getPlan().getPlanId());
+        }
+        return dto;
     }
 
     @Override
@@ -55,16 +53,40 @@ public class StudentServiceImpl implements StudentService {
 
         return studentRepository.findAll()
                 .stream()
-                .map(s -> mapper.map(s, StudentDTO.class))
+                .map(student -> {
+                    StudentDTO dto = mapper.map(student, StudentDTO.class);
+                    if (student.getPlan() != null) {
+                        dto.setPlanId(student.getPlan().getPlanId());
+                    }
+                    return dto;
+                })
                 .collect(Collectors.toList());
+    }
+
+    // ✅ STUDENT SELECT PLAN
+    @Override
+    public StudentDTO selectPlan(Long studentId, Long planId) {
+
+        Student student = studentRepository.findById(studentId)
+                .orElseThrow(() -> new RuntimeException("Student not found"));
+
+        MessPlan plan = planRepository.findById(planId)
+                .orElseThrow(() -> new RuntimeException("Mess plan not found"));
+
+        student.setPlan(plan);
+        Student saved = studentRepository.save(student);
+
+        StudentDTO dto = mapper.map(saved, StudentDTO.class);
+        dto.setPlanId(planId);
+        return dto;
     }
 
     @Override
     public void deleteStudent(Long id) {
 
-        Student student = studentRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Student not found"));
-
-        studentRepository.delete(student);
+        if (!studentRepository.existsById(id)) {
+            throw new RuntimeException("Student not found");
+        }
+        studentRepository.deleteById(id);
     }
 }

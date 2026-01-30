@@ -16,13 +16,14 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
-
 @Component
 @RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtUtils jwtUtils;
     private final AdminDetailsService adminDetailsService;
+    private final VendorDetailsService vendorDetailsService;
+    private final StudentDetailsService studentDetailsService;
 
     @Override
     protected void doFilterInternal(
@@ -31,15 +32,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             FilterChain filterChain)
             throws ServletException, IOException {
 
-        // ✅ SKIP LOGIN API
-        if (request.getServletPath().equals("/admin/login")) {
-            filterChain.doFilter(request, response);
-            return;
-        }
-
         String authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
 
-        // No JWT → continue
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             filterChain.doFilter(request, response);
             return;
@@ -49,27 +43,36 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         try {
             Claims claims = jwtUtils.validateToken(jwt);
+
             String email = claims.getSubject();
+            String role = claims.get("user_role", String.class);
 
             if (email != null &&
                 SecurityContextHolder.getContext().getAuthentication() == null) {
 
-                UserDetails userDetails =
-                        adminDetailsService.loadUserByUsername(email);
+                UserDetails userDetails = switch (role) {
+                    case "ADMIN" -> adminDetailsService.loadUserByUsername(email);
+                    case "VENDOR" -> vendorDetailsService.loadUserByUsername(email);
+                    case "STUDENT" -> studentDetailsService.loadUserByUsername(email);
+                    default -> null;
+                };
 
-                UsernamePasswordAuthenticationToken authentication =
-                        new UsernamePasswordAuthenticationToken(
-                                userDetails,
-                                null,
-                                userDetails.getAuthorities()
-                        );
+                if (userDetails != null) {
+                    UsernamePasswordAuthenticationToken authentication =
+                            new UsernamePasswordAuthenticationToken(
+                                    userDetails,
+                                    null,
+                                    userDetails.getAuthorities()
+                            );
 
-                authentication.setDetails(
-                        new WebAuthenticationDetailsSource().buildDetails(request)
-                );
+                    authentication.setDetails(
+                            new WebAuthenticationDetailsSource()
+                                    .buildDetails(request)
+                    );
 
-                SecurityContextHolder.getContext()
-                        .setAuthentication(authentication);
+                    SecurityContextHolder.getContext()
+                            .setAuthentication(authentication);
+                }
             }
 
         } catch (Exception e) {

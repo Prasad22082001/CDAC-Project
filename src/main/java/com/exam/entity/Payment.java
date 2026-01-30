@@ -5,32 +5,33 @@ import java.time.LocalDateTime;
 import jakarta.persistence.*;
 import lombok.*;
 
+@Entity
+@Table(name = "payments")
 @Getter
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-@Entity
-@Table(name = "payments")
 public class Payment {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "payment_id")
     private Long paymentId;
 
     @Column(nullable = false)
     private double amount;
 
+    // UPI / CASH / CARD
     @Column(nullable = false)
-    private String paymentMode;   // UPI / Cash / Card
+    private String paymentMode;
 
+    // PENDING / SUCCESS / FAILED
     @Column(nullable = false)
-    private String status;        // SUCCESS / FAILED
+    private String status;
 
     @Column(nullable = false)
     private LocalDateTime paymentDate;
 
-    // ✅ Many payments done by one student
+    // many payments → one student
     @ManyToOne
     @JoinColumn(name = "student_id", nullable = false)
     private Student student;

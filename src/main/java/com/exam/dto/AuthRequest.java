@@ -15,6 +15,5 @@ public class AuthRequest {
 	@Email(message = "Invalid Email Format")
 	private String email;
 	@NotBlank
-	@Pattern(regexp="((?=.*\\d)(?=.*[a-z])(?=.*[#@$*]).{5,20})",message = "Blank or invalid password")
 	private String password;
 }

@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import org.modelmapper.ModelMapper;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import com.exam.dto.MessVendorDTO;
@@ -13,20 +14,21 @@ import com.exam.repository.AdminRepository;
 import com.exam.repository.MessVendorRepository;
 import com.exam.service.MessVendorService;
 
-import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
 
 @Service
-@AllArgsConstructor
+@RequiredArgsConstructor
 public class MessVendorServiceImpl implements MessVendorService {
 
     private final MessVendorRepository vendorRepository;
     private final AdminRepository adminRepository;
     private final ModelMapper mapper;
+    private final PasswordEncoder passwordEncoder;
 
     @Override
     public MessVendorDTO addVendor(MessVendorDTO dto) {
 
-        // 🔗 resolve adminId
+        // 🔗 Validate admin
         Admin admin = adminRepository.findById(dto.getAdminId())
                 .orElseThrow(() -> new RuntimeException("Admin not found"));
 
@@ -34,7 +36,10 @@ public class MessVendorServiceImpl implements MessVendorService {
         MessVendor vendor = mapper.map(dto, MessVendor.class);
         vendor.setAdmin(admin);
 
-        // save
+        // 🔐 IMPORTANT: encode password
+        vendor.setPassword(passwordEncoder.encode(dto.getPassword()));
+
+        // Save
         MessVendor saved = vendorRepository.save(vendor);
 
         // Entity → DTO
@@ -55,16 +60,17 @@ public class MessVendorServiceImpl implements MessVendorService {
 
         return vendorRepository.findAll()
                 .stream()
-                .map(v -> mapper.map(v, MessVendorDTO.class))
+                .map(vendor -> mapper.map(vendor, MessVendorDTO.class))
                 .collect(Collectors.toList());
     }
+
     @Override
     public void deleteVendor(Long id) {
 
-        MessVendor vendor = vendorRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Vendor not found"));
+        if (!vendorRepository.existsById(id)) {
+            throw new RuntimeException("Vendor not found");
+        }
 
-        vendorRepository.delete(vendor);
+        vendorRepository.deleteById(id);
     }
-
 }

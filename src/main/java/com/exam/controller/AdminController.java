@@ -3,6 +3,7 @@ package com.exam.controller;
 import java.util.List;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -28,7 +29,7 @@ public class AdminController {
     private final JwtUtils jwtUtils;
     private final AdminService adminService;
 
-    // 🔐 ADMIN LOGIN (JWT)
+    // 🔐 ADMIN LOGIN
     @PostMapping("/login")
     public ResponseEntity<AuthResp> adminLogin(
             @RequestBody AuthRequest request) {
@@ -51,7 +52,7 @@ public class AdminController {
         );
     }
 
-    // ✅ ADD ADMIN (JWT PROTECTED)
+    // ➕ ADD ADMIN (TEMP: PUBLIC FOR FIRST ADMIN)
     @PostMapping("/add")
     public ResponseEntity<AdminDTO> addAdmin(
             @Valid @RequestBody AdminDTO dto) {
@@ -59,17 +60,17 @@ public class AdminController {
         return ResponseEntity.ok(adminService.addAdmin(dto));
     }
 
-    // ✅ GET ADMIN BY ID (JWT PROTECTED)
+    // 👀 GET ADMIN BY ID (ADMIN ONLY)
+    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/{id}")
     public ResponseEntity<AdminDTO> getAdmin(@PathVariable Long id) {
-
         return ResponseEntity.ok(adminService.getAdminById(id));
     }
 
-    // ✅ GET ALL ADMINS (JWT PROTECTED)
+    // 👀 GET ALL ADMINS (ADMIN ONLY)
+    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/all")
     public ResponseEntity<List<AdminDTO>> getAllAdmins() {
-
         return ResponseEntity.ok(adminService.getAllAdmins());
     }
 }
