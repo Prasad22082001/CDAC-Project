@@ -22,10 +22,10 @@ public class AdminServiceImpl implements AdminService {
     private final ModelMapper mapper;
     private final PasswordEncoder passwordEncoder;
 
+    // ================= ADD ADMIN =================
     @Override
     public AdminDTO addAdmin(AdminDTO dto) {
 
-        // 🔧 EXPLICIT MAPPING (FIX)
         Admin admin = new Admin();
         admin.setName(dto.getName());
         admin.setEmail(dto.getEmail());
@@ -36,6 +36,7 @@ public class AdminServiceImpl implements AdminService {
         return mapper.map(saved, AdminDTO.class);
     }
 
+    // ================= GET ADMIN BY ID =================
     @Override
     public AdminDTO getAdminById(Long id) {
 
@@ -45,6 +46,7 @@ public class AdminServiceImpl implements AdminService {
         return mapper.map(admin, AdminDTO.class);
     }
 
+    // ================= GET ALL ADMINS =================
     @Override
     public List<AdminDTO> getAllAdmins() {
 
@@ -54,5 +56,14 @@ public class AdminServiceImpl implements AdminService {
                 .collect(Collectors.toList());
     }
 
-   
+    // ================= DELETE ADMIN =================
+    @Override
+    public void deleteAdmin(Long id) {
+
+        if (!adminRepository.existsById(id)) {
+            throw new RuntimeException("Admin not found");
+        }
+
+        adminRepository.deleteById(id);
+    }
 }

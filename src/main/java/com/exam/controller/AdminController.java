@@ -7,6 +7,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import com.exam.dto.AdminDTO;
@@ -29,10 +30,9 @@ public class AdminController {
     private final JwtUtils jwtUtils;
     private final AdminService adminService;
 
-    // 🔐 ADMIN LOGIN
+    // ================= ADMIN LOGIN =================
     @PostMapping("/login")
-    public ResponseEntity<AuthResp> adminLogin(
-            @RequestBody AuthRequest request) {
+    public ResponseEntity<AuthResp> login(@RequestBody AuthRequest request) {
 
         Authentication authentication =
                 authenticationManager.authenticate(
@@ -42,17 +42,16 @@ public class AdminController {
                         )
                 );
 
-        UserPrincipal principal =
-                (UserPrincipal) authentication.getPrincipal();
-
-        String jwt = jwtUtils.generateToken(principal);
+        UserPrincipal principal = (UserPrincipal) authentication.getPrincipal();
+        String token = jwtUtils.generateToken(principal);
 
         return ResponseEntity.ok(
-                new AuthResp(jwt, "Admin login successful")
+                new AuthResp(token, "Admin login successful")
         );
     }
 
-    // ➕ ADD ADMIN (TEMP: PUBLIC FOR FIRST ADMIN)
+    // ================= ADD ADMIN (ADMIN ONLY) =================
+    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/add")
     public ResponseEntity<AdminDTO> addAdmin(
             @Valid @RequestBody AdminDTO dto) {
@@ -60,17 +59,26 @@ public class AdminController {
         return ResponseEntity.ok(adminService.addAdmin(dto));
     }
 
-    // 👀 GET ADMIN BY ID (ADMIN ONLY)
-    @PreAuthorize("hasRole('ADMIN')")
-    @GetMapping("/{id}")
-    public ResponseEntity<AdminDTO> getAdmin(@PathVariable Long id) {
-        return ResponseEntity.ok(adminService.getAdminById(id));
-    }
-
-    // 👀 GET ALL ADMINS (ADMIN ONLY)
+    // ================= GET ALL ADMINS =================
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/all")
     public ResponseEntity<List<AdminDTO>> getAllAdmins() {
         return ResponseEntity.ok(adminService.getAllAdmins());
+    }
+
+    // ================= DELETE ADMIN =================
+    @PreAuthorize("hasRole('ADMIN')")
+    @DeleteMapping("/delete/{id}")
+    public ResponseEntity<String> deleteAdmin(
+            @PathVariable Long id,
+            @AuthenticationPrincipal UserPrincipal principal) {
+
+        // ❌ SELF DELETE NOT ALLOWED
+        if (principal.getUserId().equals(id)) {
+            throw new RuntimeException("Admin cannot delete own account");
+        }
+
+        adminService.deleteAdmin(id);
+        return ResponseEntity.ok("Admin deleted successfully");
     }
 }

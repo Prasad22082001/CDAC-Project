@@ -24,6 +24,10 @@ public class StudentDTO {
     @Size(min = 6)
     private String password;
 
-    // optional (select later)
+    // optional
     private Long planId;
+
+    // ✅ NEW
+    private Long vendorId;
 }
+

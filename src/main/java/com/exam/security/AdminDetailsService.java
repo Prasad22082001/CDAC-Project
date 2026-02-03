@@ -20,18 +20,15 @@ public class AdminDetailsService implements UserDetailsService {
     private final AdminRepository adminRepository;
 
     @Override
-    public UserDetails loadUserByUsername(String email)
-            throws UsernameNotFoundException {
+    public UserDetails loadUserByUsername(String email) {
 
         Admin admin = adminRepository.findByEmail(email)
-                .orElseThrow(() ->
-                        new UsernameNotFoundException(
-                                "Admin not found with email: " + email));
+                .orElseThrow(() -> new UsernameNotFoundException("Admin not found"));
 
         return new UserPrincipal(
-                admin.getAdminId(),          // userId
-                admin.getEmail(),            // username
-                admin.getPassword(),         // ✅ FIXED HERE
+                admin.getAdminId(),
+                admin.getEmail(),
+                admin.getPassword(),
                 List.of(new SimpleGrantedAuthority("ROLE_ADMIN")),
                 "ADMIN"
         );

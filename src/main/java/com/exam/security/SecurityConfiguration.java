@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.ProviderManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
@@ -14,6 +15,9 @@ import org.springframework.security.crypto.password.NoOpPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import lombok.RequiredArgsConstructor;
 
@@ -27,35 +31,86 @@ public class SecurityConfiguration {
     private final VendorDetailsService vendorDetailsService;
     private final StudentDetailsService studentDetailsService;
 
-    // 🔐 SECURITY FILTER CHAIN
+    // ================= SECURITY FILTER CHAIN =================
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 
         http
+            // ✅ CORS
+            .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+
+            // ❌ CSRF (JWT based)
             .csrf(csrf -> csrf.disable())
 
+            // ❌ SESSION (STATELESS)
             .sessionManagement(session ->
                 session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
             )
 
+            // ================= AUTH RULES =================
             .authorizeHttpRequests(auth -> auth
 
-                // 🔓 PUBLIC ENDPOINTS
-            		.requestMatchers(
-            		        "/admin/login",
-            		        "/admin/add",   // 👈 ADD THIS
-            		        "/student/login",
-            		        "/vendor/login",
-            		        "/swagger-ui.html",
-            		        "/swagger-ui/**",
-            		        "/v3/api-docs/**"
-            		).permitAll()
+                // ✅ PREFLIGHT
+                .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 
+                // 🔓 PUBLIC (LOGIN + SWAGGER)
+                .requestMatchers(
+                        "/admin/login",
+                        "/student/login",
+                        "/vendor/login",
+                        "/swagger-ui/**",
+                        "/v3/api-docs/**"
+                ).permitAll()
 
-                // 🔐 ROLE BASED ACCESS
-                .requestMatchers("/admin/**").hasRole("ADMIN")
-                .requestMatchers("/vendor/**").hasRole("VENDOR")
-                .requestMatchers("/student/**").authenticated()
+                // ================= ADMIN =================
+                .requestMatchers("/admin/**")
+                    .hasRole("ADMIN")
+
+                // ================= STUDENT (ADMIN ONLY OPS) =================
+                .requestMatchers(
+                        "/student/add",
+                        "/student/all",
+                        "/student/delete/**"
+                ).hasRole("ADMIN")
+
+                // ================= VENDOR (ADMIN OPS) =================
+                .requestMatchers(
+                        "/vendor/add",
+                        "/vendor/delete/**"
+                ).hasRole("ADMIN")
+
+                // ================= VENDOR LIST =================
+                .requestMatchers(HttpMethod.GET, "/vendor/all")
+                    .hasAnyRole("ADMIN", "STUDENT")
+
+                // ================= MENU =================
+                .requestMatchers(HttpMethod.POST, "/menu/add")
+                    .hasAnyRole("ADMIN", "VENDOR")
+
+                .requestMatchers(HttpMethod.DELETE, "/menu/delete/**")
+                    .hasAnyRole("ADMIN", "VENDOR")
+
+                .requestMatchers(HttpMethod.GET, "/menu/**")
+                    .hasAnyRole("ADMIN", "VENDOR", "STUDENT")
+
+                // ================= WORKER =================
+                .requestMatchers("/worker/**")
+                    .hasAnyRole("ADMIN", "VENDOR")
+
+                // ================= STUDENT SELF =================
+                .requestMatchers(
+                        "/student/me",
+                        "/student/select-plan/**",
+                        "/student/select-vendor/**"
+                ).hasRole("STUDENT")
+
+                // ================= ✅ VENDOR → OWN STUDENTS =================
+                .requestMatchers("/student/vendor/my-students")
+                    .hasRole("VENDOR")
+
+                // ================= PAYMENT =================
+                .requestMatchers("/payment/**")
+                    .hasAnyRole("ADMIN", "STUDENT")
 
                 .anyRequest().authenticated()
             )
@@ -69,7 +124,7 @@ public class SecurityConfiguration {
         return http.build();
     }
 
-    // ✅ AUTHENTICATION MANAGER (ADMIN + VENDOR + STUDENT)
+    // ================= AUTH MANAGER =================
     @Bean
     public AuthenticationManager authenticationManager() {
         return new ProviderManager(
@@ -81,7 +136,7 @@ public class SecurityConfiguration {
         );
     }
 
-    // 🔐 ADMIN AUTH PROVIDER
+    // ================= ADMIN PROVIDER =================
     @Bean
     public DaoAuthenticationProvider adminAuthProvider() {
         DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
@@ -90,7 +145,7 @@ public class SecurityConfiguration {
         return provider;
     }
 
-    // 🔐 VENDOR AUTH PROVIDER
+    // ================= VENDOR PROVIDER =================
     @Bean
     public DaoAuthenticationProvider vendorAuthProvider() {
         DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
@@ -99,7 +154,7 @@ public class SecurityConfiguration {
         return provider;
     }
 
-    // 🔐 STUDENT AUTH PROVIDER
+    // ================= STUDENT PROVIDER =================
     @Bean
     public DaoAuthenticationProvider studentAuthProvider() {
         DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
@@ -108,10 +163,29 @@ public class SecurityConfiguration {
         return provider;
     }
 
-    // ⚠️ TEMP PASSWORD ENCODER (PLAIN TEXT)
-    // 👉 Viva line: "Production me BCryptPasswordEncoder use karenge"
+    // ⚠️ PASSWORD ENCODER (VIVA SAFE)
     @Bean
     public PasswordEncoder passwordEncoder() {
         return NoOpPasswordEncoder.getInstance();
+    }
+
+    // ================= CORS =================
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+
+        CorsConfiguration config = new CorsConfiguration();
+        config.setAllowedOrigins(List.of(
+                "http://localhost:5173",
+                "http://localhost:8080"
+        ));
+        config.setAllowedMethods(List.of("GET","POST","PUT","DELETE","OPTIONS"));
+        config.setAllowedHeaders(List.of("*"));
+        config.setAllowCredentials(true);
+
+        UrlBasedCorsConfigurationSource source =
+                new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", config);
+
+        return source;
     }
 }

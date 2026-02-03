@@ -18,18 +18,16 @@ public class VendorDetailsService implements UserDetailsService {
     private final MessVendorRepository vendorRepository;
 
     @Override
-    public UserDetails loadUserByUsername(String email)
-            throws UsernameNotFoundException {
+    public UserDetails loadUserByUsername(String email) {
 
         MessVendor vendor = vendorRepository.findByEmail(email)
                 .orElseThrow(() ->
-                        new UsernameNotFoundException(
-                                "Vendor not found with email: " + email));
+                        new UsernameNotFoundException("Vendor not found"));
 
         return new UserPrincipal(
-                vendor.getVendorId(),          // userId
-                vendor.getEmail(),             // username
-                vendor.getPassword(),          // ✅ DB PASSWORD (FIXED)
+                vendor.getVendorId(),
+                vendor.getEmail(),
+                vendor.getPassword(),
                 List.of(new SimpleGrantedAuthority("ROLE_VENDOR")),
                 "VENDOR"
         );

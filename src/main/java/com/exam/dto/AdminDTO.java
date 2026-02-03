@@ -1,6 +1,8 @@
 package com.exam.dto;
 
-import jakarta.validation.constraints.*;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -8,7 +10,7 @@ import lombok.Setter;
 @Setter
 public class AdminDTO {
 
-    private Long adminId; // response ke liye, request me mat bhejna
+    private Long adminId; 
 
     @NotBlank(message = "Admin name cannot be blank")
     private String name;

@@ -18,22 +18,20 @@ import com.exam.security.UserPrincipal;
 import com.exam.service.MessVendorService;
 
 import jakarta.validation.Valid;
-import lombok.AllArgsConstructor;
-
+import lombok.RequiredArgsConstructor;
 @RestController
 @RequestMapping("/vendor")
-@CrossOrigin("*")
-@AllArgsConstructor
+@CrossOrigin("http://localhost:5173")
+@RequiredArgsConstructor
 public class MessVendorController {
 
     private final MessVendorService vendorService;
     private final AuthenticationManager authenticationManager;
     private final JwtUtils jwtUtils;
 
-    // 🔐 VENDOR LOGIN (PUBLIC)
+    // 🔐 VENDOR LOGIN
     @PostMapping("/login")
-    public ResponseEntity<AuthResp> vendorLogin(
-            @RequestBody AuthRequest request) {
+    public ResponseEntity<AuthResp> login(@RequestBody AuthRequest request) {
 
         Authentication authentication =
                 authenticationManager.authenticate(
@@ -43,17 +41,13 @@ public class MessVendorController {
                         )
                 );
 
-        UserPrincipal principal =
-                (UserPrincipal) authentication.getPrincipal();
+        UserPrincipal principal = (UserPrincipal) authentication.getPrincipal();
+        String token = jwtUtils.generateToken(principal);
 
-        String jwt = jwtUtils.generateToken(principal);
-
-        return ResponseEntity.ok(
-                new AuthResp(jwt, "Vendor login successful")
-        );
+        return ResponseEntity.ok(new AuthResp(token, "Vendor login successful"));
     }
 
-    // ➕ ADD VENDOR (ADMIN ONLY)
+    // ➕ ADD VENDOR (ADMIN)
     @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/add")
     public ResponseEntity<MessVendorDTO> addVendor(
@@ -62,39 +56,32 @@ public class MessVendorController {
         return ResponseEntity.ok(vendorService.addVendor(dto));
     }
 
-    // 👀 GET VENDOR BY ID
-    // ADMIN → any vendor
-    // VENDOR → only own data
+    // 👀 GET ALL VENDORS (ADMIN + STUDENT)  ✅ FIXED
+    @PreAuthorize("hasAnyRole('ADMIN','STUDENT')")
+    @GetMapping("/all")
+    public ResponseEntity<List<MessVendorDTO>> getAll() {
+        return ResponseEntity.ok(vendorService.getAllVendors());
+    }
+
+    // 👀 GET VENDOR (ADMIN / OWN)
     @PreAuthorize("hasAnyRole('ADMIN','VENDOR')")
     @GetMapping("/{id}")
-    public ResponseEntity<MessVendorDTO> getVendor(
+    public ResponseEntity<MessVendorDTO> getOne(
             @PathVariable Long id,
             @AuthenticationPrincipal UserPrincipal principal) {
 
-        // if logged in user is VENDOR, allow only own record
-        if (principal.getAuthorities().stream()
-                .anyMatch(a -> a.getAuthority().equals("ROLE_VENDOR"))
+        if (principal.getUserRole().equals("VENDOR")
                 && !principal.getUserId().equals(id)) {
-
             throw new RuntimeException("Access denied");
         }
 
         return ResponseEntity.ok(vendorService.getVendorById(id));
     }
 
-    // 👀 GET ALL VENDORS (ADMIN ONLY)
+    // ❌ DELETE (ADMIN)
     @PreAuthorize("hasRole('ADMIN')")
-    @GetMapping("/all")
-    public ResponseEntity<List<MessVendorDTO>> getAllVendors() {
-
-        return ResponseEntity.ok(vendorService.getAllVendors());
-    }
-
-    // ❌ DELETE VENDOR (ADMIN ONLY)
-    @PreAuthorize("hasRole('ADMIN')")
-    @DeleteMapping("/delete/{id}")
-    public ResponseEntity<String> deleteVendor(@PathVariable Long id) {
-
+    @DeleteMapping("/{id}")
+    public ResponseEntity<String> delete(@PathVariable Long id) {
         vendorService.deleteVendor(id);
         return ResponseEntity.ok("Vendor deleted successfully");
     }

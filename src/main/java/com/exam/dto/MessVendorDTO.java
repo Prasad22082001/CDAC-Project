@@ -8,24 +8,21 @@ import lombok.Setter;
 @Setter
 public class MessVendorDTO {
 
-    private Long vendorId; // response ke liye
+    private Long vendorId;
 
-    @NotBlank(message = "Mess name cannot be blank")
+    @NotBlank
     private String messName;
 
-    @Email(message = "Invalid email format")
-    @NotBlank(message = "Email is required")
+    @Email
+    @NotBlank
     private String email;
 
-    @NotBlank(message = "Password is required")
-    private String password;   // ✅ ADD THIS
+    @NotBlank
+    private String password;
 
-    @NotBlank(message = "Contact number is required")
+    @NotBlank
     private String contact;
 
-    @NotNull(message = "Admin ID is required")
+    @NotNull
     private Long adminId;
-
-    // optional
-    // private String type;
 }

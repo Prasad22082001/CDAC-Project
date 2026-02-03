@@ -27,8 +27,13 @@ public class Student {
     @Column(nullable = false)
     private String password;
 
-    // ✅ student may select plan later
+    // ✅ selected mess plan (optional)
     @ManyToOne
     @JoinColumn(name = "plan_id")
     private MessPlan plan;
+
+    // ✅ selected mess vendor (NEW)
+    @ManyToOne
+    @JoinColumn(name = "vendor_id")
+    private MessVendor selectedVendor;
 }

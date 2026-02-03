@@ -29,8 +29,9 @@ public class PaymentController {
             @Valid @RequestBody PaymentDTO dto,
             @AuthenticationPrincipal UserPrincipal principal) {
 
+        // ✅ studentId always from JWT (secure)
         return ResponseEntity.ok(
-                paymentService.makePayment(dto, principal.getUserId())
+                paymentService.makePayment(principal.getUserId(), dto)
         );
     }
 

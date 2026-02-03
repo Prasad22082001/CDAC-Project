@@ -24,10 +24,11 @@ public class PaymentServiceImpl implements PaymentService {
     private final StudentRepository studentRepository;
     private final ModelMapper mapper;
 
+    // 💳 STUDENT → MAKE PAYMENT
     @Override
-    public PaymentDTO makePayment(PaymentDTO dto, Long studentId) {
+    public PaymentDTO makePayment(Long studentId, PaymentDTO dto) {
 
-        // 🔗 validate student
+        // 🔐 validate student
         Student student = studentRepository.findById(studentId)
                 .orElseThrow(() -> new RuntimeException("Student not found"));
 
@@ -36,28 +37,30 @@ public class PaymentServiceImpl implements PaymentService {
         payment.setStudent(student);
         payment.setPaymentDate(LocalDateTime.now());
 
-        // 💳 MOCK PAYMENT FLOW
-        payment.setStatus("SUCCESS"); // always success for project
+        // 💳 MOCK PAYMENT (PROJECT PURPOSE)
+        payment.setStatus("SUCCESS");
 
         Payment saved = paymentRepository.save(payment);
         return mapper.map(saved, PaymentDTO.class);
     }
 
+    // 👀 STUDENT → OWN PAYMENT HISTORY
     @Override
     public List<PaymentDTO> getMyPayments(Long studentId) {
 
         return paymentRepository.findByStudentStudentId(studentId)
                 .stream()
-                .map(payment -> mapper.map(payment, PaymentDTO.class))
+                .map(p -> mapper.map(p, PaymentDTO.class))
                 .collect(Collectors.toList());
     }
 
+    // 👑 ADMIN → ALL PAYMENTS
     @Override
     public List<PaymentDTO> getAllPayments() {
 
         return paymentRepository.findAll()
                 .stream()
-                .map(payment -> mapper.map(payment, PaymentDTO.class))
+                .map(p -> mapper.map(p, PaymentDTO.class))
                 .collect(Collectors.toList());
     }
 }

@@ -34,20 +34,29 @@ public class MenuController {
         );
     }
 
-    // 👀 GET MENU BY ID (ALL ROLES)
+    // 👀 GET MENU BY ID
     @PreAuthorize("hasAnyRole('ADMIN','VENDOR','STUDENT')")
     @GetMapping("/{id}")
     public ResponseEntity<MenuDTO> getMenuById(@PathVariable Long id) {
-
         return ResponseEntity.ok(menuService.getMenuById(id));
     }
 
-    // 👀 GET ALL MENUS (ALL ROLES)
-    @PreAuthorize("hasAnyRole('ADMIN','VENDOR','STUDENT')")
+    // 👀 ADMIN / VENDOR → ALL MENUS
+    @PreAuthorize("hasAnyRole('ADMIN','VENDOR')")
     @GetMapping("/all")
     public ResponseEntity<List<MenuDTO>> getAllMenu() {
-
         return ResponseEntity.ok(menuService.getAllMenu());
+    }
+
+    // 🎓 STUDENT → ONLY SELECTED VENDOR MENU ✅🔥
+    @PreAuthorize("hasRole('STUDENT')")
+    @GetMapping("/student")
+    public ResponseEntity<List<MenuDTO>> getStudentMenu(
+            @AuthenticationPrincipal UserPrincipal principal) {
+
+        return ResponseEntity.ok(
+                menuService.getMenuForStudent(principal.getUserId())
+        );
     }
 
     // ❌ DELETE MENU (ADMIN OR OWNER VENDOR)

@@ -30,10 +30,9 @@ public class StudentController {
     private final AuthenticationManager authenticationManager;
     private final JwtUtils jwtUtils;
 
-    // 🔐 STUDENT LOGIN (PUBLIC)
+    // ================= LOGIN =================
     @PostMapping("/login")
-    public ResponseEntity<AuthResp> studentLogin(
-            @RequestBody AuthRequest request) {
+    public ResponseEntity<AuthResp> studentLogin(@RequestBody AuthRequest request) {
 
         Authentication authentication =
                 authenticationManager.authenticate(
@@ -43,24 +42,13 @@ public class StudentController {
                         )
                 );
 
-        UserPrincipal principal =
-                (UserPrincipal) authentication.getPrincipal();
-
+        UserPrincipal principal = (UserPrincipal) authentication.getPrincipal();
         String jwt = jwtUtils.generateToken(principal);
 
-        return ResponseEntity.ok(
-                new AuthResp(jwt, "Student login successful")
-        );
+        return ResponseEntity.ok(new AuthResp(jwt, "Student login successful"));
     }
 
-    // 👑 ADMIN → ALL STUDENTS
-    @PreAuthorize("hasRole('ADMIN')")
-    @GetMapping("/all")
-    public ResponseEntity<List<StudentDTO>> getAllStudents() {
-        return ResponseEntity.ok(studentService.getAllStudents());
-    }
-
-    // 👑 ADMIN → ADD STUDENT
+    // ================= ADMIN → ADD STUDENT ✅🔥 =================
     @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/add")
     public ResponseEntity<StudentDTO> addStudent(
@@ -69,25 +57,25 @@ public class StudentController {
         return ResponseEntity.ok(studentService.addStudent(dto));
     }
 
-    // 👀 ADMIN → any student
-    // 👤 STUDENT → own profile only
-    @PreAuthorize("hasAnyRole('ADMIN','STUDENT')")
-    @GetMapping("/{id}")
-    public ResponseEntity<StudentDTO> getStudent(
-            @PathVariable Long id,
-            @AuthenticationPrincipal UserPrincipal principal) {
-
-        if (principal.getAuthorities().stream()
-                .anyMatch(a -> a.getAuthority().equals("ROLE_STUDENT"))
-                && !principal.getUserId().equals(id)) {
-
-            throw new RuntimeException("Access denied");
-        }
-
-        return ResponseEntity.ok(studentService.getStudentById(id));
+    // ================= ADMIN → ALL STUDENTS =================
+    @PreAuthorize("hasRole('ADMIN')")
+    @GetMapping("/all")
+    public ResponseEntity<List<StudentDTO>> getAllStudents() {
+        return ResponseEntity.ok(studentService.getAllStudents());
     }
 
-    // 🎓 STUDENT → SELECT PLAN
+    // ================= STUDENT → OWN PROFILE =================
+    @PreAuthorize("hasRole('STUDENT')")
+    @GetMapping("/me")
+    public ResponseEntity<StudentDTO> getMyProfile(
+            @AuthenticationPrincipal UserPrincipal principal) {
+
+        return ResponseEntity.ok(
+                studentService.getStudentById(principal.getUserId())
+        );
+    }
+
+    // ================= STUDENT → SELECT PLAN =================
     @PreAuthorize("hasRole('STUDENT')")
     @PutMapping("/select-plan/{planId}")
     public ResponseEntity<StudentDTO> selectPlan(
@@ -99,7 +87,18 @@ public class StudentController {
         );
     }
 
-    // 👑 ADMIN → DELETE STUDENT
+    // ================= STUDENT → SELECT VENDOR =================
+    @PreAuthorize("hasRole('STUDENT')")
+    @PutMapping("/select-vendor/{vendorId}")
+    public ResponseEntity<StudentDTO> selectVendor(
+            @PathVariable Long vendorId,
+            @AuthenticationPrincipal UserPrincipal principal) {
+
+        return ResponseEntity.ok(
+                studentService.selectVendor(principal.getUserId(), vendorId)
+        );
+    }
+ // ================= ADMIN → DELETE STUDENT ❌ =================
     @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/delete/{id}")
     public ResponseEntity<String> deleteStudent(@PathVariable Long id) {
@@ -107,4 +106,17 @@ public class StudentController {
         studentService.deleteStudent(id);
         return ResponseEntity.ok("Student deleted successfully");
     }
+    
+ // ================= VENDOR → VIEW OWN STUDENTS =================
+    @PreAuthorize("hasRole('VENDOR')")
+    @GetMapping("/vendor/my-students")
+    public ResponseEntity<List<StudentDTO>> getMyStudents(
+            @AuthenticationPrincipal UserPrincipal principal) {
+
+        return ResponseEntity.ok(
+                studentService.getStudentsByVendor(principal.getUserId())
+        );
+    }
+
+
 }

@@ -9,5 +9,7 @@ public interface AdminService {
 
     AdminDTO getAdminById(Long id);
 
-    List<AdminDTO> getAllAdmins();   // ✅ GET ALL
+    List<AdminDTO> getAllAdmins();
+
+    void deleteAdmin(Long id);
 }

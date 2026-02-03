@@ -9,9 +9,15 @@ public interface StudentService {
 
     StudentDTO getStudentById(Long id);
 
-    List<StudentDTO> getAllStudents();
+    List<StudentDTO> getAllStudents(); // ✅ ADMIN
 
     StudentDTO selectPlan(Long studentId, Long planId);
 
+    StudentDTO selectVendor(Long studentId, Long vendorId);
+
     void deleteStudent(Long id);
+    
+ // ✅ VENDOR → SEE OWN STUDENTS
+    List<StudentDTO> getStudentsByVendor(Long vendorId);
+
 }

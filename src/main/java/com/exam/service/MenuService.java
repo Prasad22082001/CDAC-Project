@@ -12,4 +12,7 @@ public interface MenuService {
     List<MenuDTO> getAllMenu();
 
     void deleteMenu(Long id, Long loggedInVendorId, boolean isAdmin);
+    
+    List<MenuDTO> getMenuForStudent(Long studentId);
+
 }

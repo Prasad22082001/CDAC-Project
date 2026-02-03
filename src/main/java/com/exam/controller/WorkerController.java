@@ -22,7 +22,7 @@ public class WorkerController {
 
     private final WorkerService workerService;
 
-    // ➕ ADD WORKER (VENDOR ONLY)
+    // ➕ ADD WORKER → VENDOR ONLY
     @PreAuthorize("hasRole('VENDOR')")
     @PostMapping("/add")
     public ResponseEntity<WorkerDTO> addWorker(
@@ -34,9 +34,9 @@ public class WorkerController {
         );
     }
 
-    // 👀 GET WORKERS
+    // 👀 VIEW WORKERS
     // ADMIN → all
-    // VENDOR → own only
+    // VENDOR → own
     @PreAuthorize("hasAnyRole('ADMIN','VENDOR')")
     @GetMapping("/all")
     public ResponseEntity<List<WorkerDTO>> getAllWorkers(
